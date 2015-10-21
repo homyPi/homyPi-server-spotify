@@ -374,11 +374,14 @@ Spotify.saveToken = function (userReq, callback) {
 Spotify.getToken = function(user) {
 	return new Promise(function (resolve, reject) {
 		'use strict';
+		console.log("getting token for user ", user);
 		models.User.findOne({"_id": user._id}, function(err, user) {
 			if (err) {
-				err.source = "SpotifyAuth.get";
+				console.log(err);
+				err.source = "SpotifyAuth.getToken";
 				return reject(err);
 			} else {
+				console.log("=====>", user);
 				if (user && user.tokens && user.tokens.spotify) {
 					return resolve(user);
 				} else {
