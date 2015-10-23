@@ -42,14 +42,19 @@ SpotifyAuth.getToken = function (uId, code, callback) {
 		var json = JSON.parse(response);
 		var d = new Date();
 		d.setHours(d.getHours() + 1);
-		SpotifyAuth.credentials = {
-			access_token: json.access_token,
-			scope: json.scope,
-			expires_date: d.getTime(),
-			refresh_token: json.refresh_token
+		var user = {
+			_id: uId,
+			tokens: {
+				spotify: {
+				access_token: json.access_token,
+					scope: json.scope,
+					expires_date: d.getTime(),
+					refresh_token: json.refresh_token
+				}
+			}
 		};
 
-		SpotifyAuth.save({_id: uId}, function(err) {
+		Spotify.saveToken(user, function(err) {
 			callback(err, response);
 		});
 

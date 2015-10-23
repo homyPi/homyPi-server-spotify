@@ -1,10 +1,16 @@
-var SpotifyAuth = require(__base + "modules/spotify/SpotifyAuth");
-var Spotify = require(__base + "modules/spotify/Spotify");
+var SpotifyAuth = require("./SpotifyAuth");
+var Spotify = require("./Spotify");
 
 var login = function(req, res) {
 	var url = SpotifyAuth.connectUrl(req.user);
 	console.log("redirect to " + url);
 	res.redirect(url);
+};
+var loginCallback = function(req, res) {
+	req.query.state = JSON.parse(req.query.state);
+	SpotifyAuth.getToken(req.query.state.uId, req.query.code, function (err, data) {
+		res.json({err: err, data: data});
+	});
 };
 var getMe = function(req, res) {
 	req.spotifyApi.getMe().then(function(me) {
@@ -29,12 +35,7 @@ var reloadMyArtists = function(req, res) {
 		res.json({err: err, data: data});
 	});
 };
-var oauth2callback = function(req, res) {
-	req.query.state = JSON.parse(req.query.state);
-	SpotifyAuth.getToken(req.query.state.uId, req.query.code, function (err, data) {
-		res.json({err: err, data: data});
-	});
-};
+
 
 var search = function(req, res) {
 	console.log("search track");
@@ -92,6 +93,6 @@ module.exports = {
 	search:search,
 	getArtist: getArtist,
 
-	oauth2callback: oauth2callback,
+	loginCallback: loginCallback,
 	getApi: getApi
 };

@@ -3,7 +3,6 @@
 /*global console*/
 /*global module*/
 var _ = require("lodash"),
-	SpotifyAuth = require('./SpotifyAuth.js'),
 	config = require(__base + "data/private/config.js"),
 	SpotifyWebApi = require('spotify-web-api-node'),
 	mongoose = require("mongoose"),
