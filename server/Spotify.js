@@ -449,6 +449,22 @@ Spotify.trackSpotifyToSchema = function(spotifyData, track) {
 	return track;
 }
 
-
+Spotify.isLoggedIn = function(user) {
+	return new Promise(function(resolve, reject) {
+		models.User.findOne({_id: user._id}, function (err, user) {
+			if (err) {
+				return reject(err);
+			}
+			if (user && user.tokens && user.tokens.spotify
+				&& user.tokens.spotify.access_token) {
+				Spotify.getApi(user).then(function(api) {
+					return api.me().then(resolve).catch(reject);
+				}).catch(reject);
+			} else {
+				return resolve(false);
+			}
+		});
+	});
+}
 module.exports = Spotify;
 

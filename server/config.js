@@ -18,12 +18,14 @@ module.exports = {
 	},
 	"getServices": function() {
 		var spotifyMiddleware = require("./spotifyMiddleware");
+		var Spotify = require("./Spotify");
 		return [{
 			name: "spotify",
 			auth: {
 				type: "oauth",
 				login: spotifyMiddleware.login,
-				loginCallback: spotifyMiddleware.loginCallback
+				loginCallback: spotifyMiddleware.loginCallback,
+				isLoggedIn : Spotify.isLoggedIn
 			}
 		}];
 	}
