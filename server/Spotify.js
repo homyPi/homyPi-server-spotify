@@ -98,7 +98,6 @@ Spotify.prototype.reloadMyArtists = function (callback) {
 	this.getPlaylists()
 		.then(function (data) {
 			console.log("RELOAD MY ARTISTS: got playlists");
-
 			api.me().then(function(me) {
 				Promise.each(data.items, function (item) {
 					return new Promise(function(resolve, reject) {
@@ -170,19 +169,6 @@ Spotify.prototype.reloadMyArtists = function (callback) {
 		})
 		.catch(function(err) { console.log(err);callback(err) });;
 };
-Spotify.prototype.getMySavedTracks = function (callback) {
-	'use strict';
-	this.getMySavedTracks({limit: 50, offset: 0}).then(
-		function (data) {
-			callback(null, data);
-		},
-		function (err) {
-			console.log("err");
-			console.log(err);
-			callback(err);
-		}
-	);
-};
 
 Spotify.prototype.searchArtist = function (artist, callback) {
 	'use strict';
@@ -217,28 +203,30 @@ Spotify.prototype.getArtistFull = function(id) {
 	});
 } 
 
-Spotify.prototype.search = function (request, type) {
+Spotify.prototype.search = function (request, options) {
 	'use strict';
 	var api = this;
+	var type = options.type;
+	delete options.type;
 	return new Promise(function(resolve, reject) {
 		var result = {};
 		var promises = [];
 		if (!type || type === "track") {
 			result.tracks = promises.length;
-			promises.push(api.searchTracks(request));
+			promises.push(api.searchTracks(request, options));
 		}
 		if (!type || type === "album") {
 			result.albums = promises.length;
-			promises.push(api.searchAlbums(request));
+			promises.push(api.searchAlbums(request, options));
 		}
 		if (!type || type === "artist") {
 			result.artists = promises.length;
-			promises.push(api.searchArtists(request));
+			promises.push(api.searchArtists(request, options));
 		}
 		Promise.all(promises).then(function(response) {
 			if (!type || type === "track") {
 				result.tracks = response[result.tracks].body.tracks;
-				result.tracks.items = result.tracks.items.map(Spotify.trackSpotifyToSchema);
+				result.tracks.items = result.tracks.items.map(Spotify.trackToSchema);
 			}
 			if (!type || type === "track") {
 				result.albums = response[result.albums].body.albums;
@@ -309,21 +297,22 @@ Spotify.prototype.checkValidity = function(user) {
 	return new Promise(function(resolve, reject) {
 		var d = new Date(new Date().getTime() - 10*60000);
 		winston.info("check validity");
-		winston.info("isExpired: " + api.user.tokens.spotify.expires_date + " < " + d.getTime());
-		winston.info("isExpired: ", (api.user.tokens.spotify.expires_date < d.getTime()));
-		if (user.tokens.spotify.expires_date < d.getTime()) {
+		winston.info("isExpired: " + api.user.externals.spotify.expires_date + " < " + d.getTime());
+		winston.info("isExpired: ", (api.user.externals.spotify.expires_date < d.getTime()));
+		if (user.externals.spotify.expires_date < d.getTime()) {
 			winston.info("refreshing token");
 			api.refreshAccessToken().then(
 				function (data) {
 					data = data.body;
 					winston.info("token refreshed");
 					d.setHours(d.getHours() + 1);
-					user.tokens.spotify.expires_date = d.getTime();
-					user.tokens.spotify.access_token = data.access_token;
-					api.setAccessToken(user.tokens.spotify.access_token);
-					api.setRefreshToken(user.tokens.spotify.refresh_token);
+					user.externals.spotify.expires_date = d.getTime();
+					user.externals.spotify.access_token = data.access_token;
+					api.setAccessToken(user.externals.spotify.access_token);
+					api.setRefreshToken(user.externals.spotify.refresh_token);
 					Spotify.saveToken(user, function(err) {
 						if (!err) {
+							console.log(user);
 							return resolve(user);
 						} else {
 							return reject(err);
@@ -341,7 +330,7 @@ Spotify.prototype.checkValidity = function(user) {
 };
 Spotify.saveToken = function (userReq, callback) {
 	'use strict';
-	var token = userReq.tokens.spotify;
+	var token = userReq.externals.spotify;
 	models.User.findOne({_id: userReq._id}, function (err, user) {
 		if (err) {
 			console.log(err);
@@ -350,10 +339,10 @@ Spotify.saveToken = function (userReq, callback) {
 		if (user === null) {
 			callback({err: "unknown user"});
 		} else {
-			if (!user.tokens) {
-				user.tokens = {};
+			if (!user.externals) {
+				user.externals = {};
 			}
-			user.tokens.spotify = {
+			user.externals.spotify = {
 				access_token: token.access_token,
 				scope: token.scope,
 				expires_date: token.expires_date,
@@ -380,8 +369,8 @@ Spotify.getToken = function(user) {
 				err.source = "SpotifyAuth.getToken";
 				return reject(err);
 			} else {
-				console.log("=====>", user);
-				if (user && user.tokens && user.tokens.spotify) {
+				console.log(user);
+				if (user && user.externals && user.externals.spotify) {
 					return resolve(user);
 				} else {
 					return reject({err: "not token provided", source: "SpotifyAuth.get"});
@@ -401,7 +390,7 @@ Spotify.getApi = function(user) {
 						redirectUri : config.spotify_config.redirect_uri
 					},
 					user);
-				var token = user.tokens.spotify;
+				var token = user.externals.spotify;
 				if ((!token || !token.access_token)) {
 					return reject({err: "not logged in to spotify"});
 				}
@@ -422,7 +411,7 @@ Spotify.getApi = function(user) {
 	});
 };
 
-Spotify.trackSpotifyToSchema = function(spotifyData, track) {
+Spotify.trackToSchema = function(spotifyData, track) {
 	if (!track || !(track instanceof Object)) {
 		track = {};
 	}
@@ -455,8 +444,8 @@ Spotify.isLoggedIn = function(user) {
 			if (err) {
 				return reject(err);
 			}
-			if (user && user.tokens && user.tokens.spotify
-				&& user.tokens.spotify.access_token) {
+			if (user && user.tokens && user.externals.spotify
+				&& user.externals.spotify.access_token) {
 				Spotify.getApi(user).then(function(api) {
 					return api.me().then(resolve).catch(reject);
 				}).catch(reject);

@@ -3,19 +3,27 @@ var Schema = mongoose.Schema;
 module.exports = {
 	"path": "music/spotify",
 	"require": [{module: "homyPi-server-music", version: "0.1"}],
-	"setSchemaDescriptions": function (schemaDescriptions) {
-		if (!schemaDescriptions.user.token) {
-			schemaDescriptions.user.token = {};
+	"externals": [
+		{
+			baseSchema: "user",
+			name: "spotify",
+			schema: {
+				access_token: String,
+				scope: String,
+				expires_date: Number,
+				refresh_token: String,
+				request_id: Schema.ObjectId
+			}
+		},
+		{
+			baseSchema: "artist",
+			name: "spotify",
+			schema: {
+				id: String,
+				uri: String
+			}
 		}
-		schemaDescriptions.user.token.spotify= {
-			access_token: String,
-			scope: String,
-			expires_date: Number,
-			refresh_token: String,
-			request_id: Schema.ObjectId
-		}
-		schemaDescriptions.artist.spotifyId = String;
-	},
+	],
 	"getServices": function() {
 		var spotifyMiddleware = require("./spotifyMiddleware");
 		var Spotify = require("./Spotify");
