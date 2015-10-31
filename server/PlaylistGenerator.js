@@ -2,10 +2,11 @@ var _ = require("lodash");
 var Promise = require("bluebird");
 var Spotify = require("./Spotify");
 
-PlaylistGenerator = function(myArtists, itemNb, spotifyApi) {
+PlaylistGenerator = function(myArtists, options) {
 	"use strict";
 	this.api = null;;
 	this.myArtists = myArtists;
+	this.options = options;
 	this.similarTo = [];
 
 	this.ignoreIds = [];
@@ -27,7 +28,7 @@ PlaylistGenerator = function(myArtists, itemNb, spotifyApi) {
 		var self = this;
 		return new Promise(function(resolve, reject) {
 			var promises = [];
-			for (var i = 0; i < itemNb; i++) {
+			for (var i = 0; i < options.nbItems; i++) {
 				promises.push(self.getArtist());
 			}
 			Promise.all(promises)

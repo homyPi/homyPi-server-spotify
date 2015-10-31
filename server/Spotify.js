@@ -228,7 +228,7 @@ Spotify.prototype.search = function (request, options) {
 				result.tracks = response[result.tracks].body.tracks;
 				result.tracks.items = result.tracks.items.map(Spotify.trackToSchema);
 			}
-			if (!type || type === "track") {
+			if (!type || type === "album") {
 				result.albums = response[result.albums].body.albums;
 			}
 			if (!type || type === "artist") {
@@ -381,6 +381,9 @@ Spotify.getToken = function(user) {
 };
 
 Spotify.getApi = function(user) {
+	console.log("get api for=========");
+	console.log(JSON.stringify(user));
+	console.log("===========================");
 	return new Promise(function(resolve, reject) {
 		Spotify.getToken(user)
 			.then(function(user) {
