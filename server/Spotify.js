@@ -182,6 +182,35 @@ Spotify.prototype.searchArtist = function (artist, callback) {
 		}
 	);
 };
+Spotify.prototype.convertPlaylist = function(playlist) {
+	var api = this;
+	return new Promise(function(resolve, reject) {
+		var promises = [];
+		for(var i = 0; i < playlist.length; i++) {
+			promises.push(new Promise(function(resolve, reject) {
+				var q = "\"" + playlist[i].track.title + "\"";
+				if (playlist[i].track.artist) {
+					//q += "+artist:" + playlist[i].track.artist
+				}
+				api.searchTracks(q, {limit: 1})
+					.then(function(res) {
+						if (res.body && res.body.tracks && res.body.tracks.items && res.body.tracks.items.length) {
+							resolve(Spotify.trackToSchema(res.body.tracks.items[0]));
+						} else {
+							console.log(res.body.tracks);
+							reject();
+						}
+					}).catch(reject);
+			}));
+		}
+		Promise.all(promises)
+			.then(function(data) {
+				resolve(data);
+			})
+			.catch(reject);
+
+	});
+}
 Spotify.prototype.getArtistFull = function(id) {
 	var api = this;
 	return new Promise(function(resolve, reject) {

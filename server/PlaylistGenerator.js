@@ -50,15 +50,20 @@ PlaylistGenerator = function(myArtists, options) {
 			if (! artist.externals || !artist.externals.spotify || !artist.externals.spotify.id) {
 				self.api.searchArtists(artist.name, { limit : 1})
 					.then(function(response) {
-						console.log("get artist");
-						if (response.body.total < 1) {
+						console.log("got response");
+						if (!response.body || !response.body.artists || response.body.artists.total < 1) {
+							console.log(JSON.stringify(response.body, null, 4));
 							self.ignoreIds.push(i);
 							self.getArtist().then(resolve).catch(reject);
 						} else {
+							if (!artist.externals) {
+								artist.externals = {};
+							}
 							artist.externals.spotify = {
 								id: response.body.artists.items[0].id,
 								uri: response.body.artists.items[0].uri
 							};
+							console.log("got artists");
 							resolve(artist);
 						}
 					});

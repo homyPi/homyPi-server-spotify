@@ -6,7 +6,7 @@ module.exports = {
 	"externals": [
 		{
 			baseSchema: "user",
-			name: "spotify",
+			name: "Spotify",
 			schema: {
 				access_token: String,
 				scope: String,
@@ -17,7 +17,7 @@ module.exports = {
 		},
 		{
 			baseSchema: "artist",
-			name: "spotify",
+			name: "Spotify",
 			schema: {
 				id: String,
 				uri: String
