@@ -5,8 +5,8 @@ module.exports = {
 	"require": [{module: "homyPi-server-music", version: "0.1"}],
 	"externals": [
 		{
-			baseSchema: "user",
-			name: "Spotify",
+			baseSchema: "User",
+			name: "spotify",
 			schema: {
 				access_token: String,
 				scope: String,
@@ -16,8 +16,8 @@ module.exports = {
 			}
 		},
 		{
-			baseSchema: "artist",
-			name: "Spotify",
+			baseSchema: "Artist",
+			name: "spotify",
 			schema: {
 				id: String,
 				uri: String
@@ -25,8 +25,8 @@ module.exports = {
 		}
 	],
 	"getServices": function() {
-		var spotifyMiddleware = require("./spotifyMiddleware");
-		var Spotify = require("./Spotify");
+		var spotifyMiddleware = require("./module/spotifyMiddleware");
+		var Spotify = require("./module/Spotify");
 		return [{
 			name: "spotify",
 			auth: {
