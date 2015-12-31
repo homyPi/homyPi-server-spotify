@@ -88,7 +88,7 @@ Spotify.prototype.getMyArtists = function() {
 		});
 	});
 };
-Spotify.prototype.reloadMyArtists = function (callback) {
+Spotify.prototype.reloadMyArtists = function (callback, onNewArtistCallback) {
 	'use strict';
 	var artists = [],
 		counter = 0,
@@ -145,6 +145,9 @@ Spotify.prototype.reloadMyArtists = function (callback) {
 					}
 					Promise.all(getSpotifyArtistsDataPromises).then(function(results) {
 						var counter = 0;
+						if (typeof onNewArtistCallback === "function") {
+							onNewArtistCallback(results);
+						}
 						console.log("got results: " + results.length);
 						for(var i = 0; i < results.length; i ++) {
 							var res = results[i].body;

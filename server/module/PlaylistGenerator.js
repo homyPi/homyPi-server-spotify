@@ -2,7 +2,7 @@ var _ = require("lodash");
 var Promise = require("bluebird");
 var Spotify = require("./Spotify");
 
-PlaylistGenerator = function(myArtists, options) {
+var PlaylistGenerator = function(myArtists, options) {
 	"use strict";
 	this.api = null;;
 	this.myArtists = myArtists;

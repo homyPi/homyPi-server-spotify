@@ -30,9 +30,18 @@ var getMyArtists = function(req, res) {
 };
 var reloadMyArtists = function(req, res) {
 	console.log("getMyArtists");
+	/*
 	req.spotifyApi.reloadMyArtists(function(err, data) {
 		console.log(err);
 		res.json({err: err, data: data});
+	});
+	*/
+	req.spotifyApi.reloadMyArtists(function(err, data) {
+		console.log(err);
+		//res.json({err: err, data: data});
+		res.end(JSON.stringify({err: err, data: data}));
+	}, function(data) {
+		res.write(JSON.stringify(data));
 	});
 };
 
