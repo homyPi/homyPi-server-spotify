@@ -5,7 +5,7 @@
 var config = require(__base + "data/private/config.js"),
 	mongoose = require("mongoose"),
 	request = require("request-promise"),
-	models = require("../Link").MongooseModels,
+	models =  require("../link").getShared().MongooseModels,
 	winston = require("winston"),
 	Spotify = require("./Spotify.js");
 

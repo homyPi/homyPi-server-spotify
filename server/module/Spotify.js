@@ -3,19 +3,40 @@
 /*global console*/
 /*global module*/
 var _ = require("lodash"),
-	config = require("../Link").config,
+	config = require("../link").getShared().config,
 	SpotifyWebApi = require('spotify-web-api-node'),
 	mongoose = require("mongoose"),
-	models = require("../Link").MongooseModels,
+	models =  require("../link").getShared().MongooseModels,
 	Q = require('q');
 var Promise = require("bluebird");
 var winston = require('winston');
 
 var Spotify = function (options, user) {"use strict";
-	SpotifyWebApi.apply(this, [options]);
+	SpotifyWebApi.call(this, options);
 	this.user = user;
+	var _super = Object.assign({}, this);
+	this.getAlbum = function(id) {
+		return new Promise(function(resolve, reject) {
+			_super.getAlbum.call(this, id)
+				.then(function(result) {
+					var album = Spotify.albumToSchema(result.body);
+					resolve(album);
+				}).catch(reject);
+		}.bind(this));
+	}
+	this.getTrack = function(id) {
+		return new Promise(function(resolve, reject) {
+			_super.getTrack.call(this, id)
+				.then(function(result) {
+					var track = Spotify.trackToSchema(result.body);
+					resolve(track);
+				}).catch(reject);
+		}.bind(this));
+	}
+
+
 };
-Spotify.prototype = SpotifyWebApi.prototype;        // Set prototype to Person's
+Spotify.prototype = Object.create(SpotifyWebApi.prototype);        // Set prototype to Person's
 Spotify.prototype.constructor = Spotify;
 
 Spotify.prototype.me = function() {
@@ -276,6 +297,9 @@ Spotify.prototype.search = function (request, options) {
 		});
 	});
 };
+
+
+
 Spotify.prototype.getArtist = function (artist_id, callback) {
 	'use strict';
 	var waiting = 3,
@@ -439,6 +463,9 @@ Spotify.getApi = function(user) {
 				api.setRefreshToken(token.refresh_token);
 				api.checkValidity(user)
 					.then(function(token) {
+						console.log("!!!!!!!!!!!!!!!!!!!!!!!!");
+						console.log(SpotifyWebApi.prototype);
+						console.log("!!!!!!!!!!!!!!!!!!!!!!!!");
 						return resolve(api);
 					})
 					.catch(function(err) {
@@ -457,6 +484,8 @@ Spotify.trackToSchema = function(spotifyData, track) {
 		track = {};
 	}
 	track._id = mongoose.Types.ObjectId();
+	track.source = "spotify";
+	track.serviceId = spotifyData.id;
 	track.uri = track.uri || spotifyData.uri;
 	track.name = spotifyData.name;
 	track.duration_ms = spotifyData.duration_ms;
@@ -469,14 +498,51 @@ Spotify.trackToSchema = function(spotifyData, track) {
 			uri: artist.uri
 		});
 	});
-	track.album = {
-		id: spotifyData.album.id,
-		album_type: spotifyData.album.album_type,
-		uri: spotifyData.album.uri,
-		images: spotifyData.album.images
-	};
-	track.source = "spotify";
+	if (spotifyData.album) {
+		track.album = {
+			id: spotifyData.album.id,
+			album_type: spotifyData.album.album_type,
+			uri: spotifyData.album.uri,
+			images: spotifyData.album.images
+		};
+	}
 	return track;
+}
+Spotify.albumToSchema = function(spotifyData, album) {
+	if (!album || !(album instanceof Object)) {
+		album = {};
+	}
+	album._id = mongoose.Types.ObjectId();
+	album.source = "spotify";
+	album.serviceId = spotifyData.id;
+	album.uri = spotifyData.uri;
+	album.name = spotifyData.name;
+	album.images = spotifyData.images;
+	album.artists = spotifyData.artists.map(artist => {
+		return {
+			id: artist.id,
+			name: artist.name,
+			uri: artist.uri
+		}
+	});
+	album.tracks = {
+		total: spotifyData.tracks.total,
+		offset: spotifyData.tracks.offset,
+		items: []
+	}
+	if (spotifyData.tracks && spotifyData.tracks.items) {
+		album.tracks.items = spotifyData.tracks.items.map(item => {
+			item.album = {
+				images: album.images,
+				id: spotifyData.id
+			}
+			return {
+				...Spotify.trackToSchema(item)
+			}
+		});
+	}
+	console.log("album: " + JSON.stringify(album, null, 2));
+	return album;
 }
 
 Spotify.isLoggedIn = function(user) {
