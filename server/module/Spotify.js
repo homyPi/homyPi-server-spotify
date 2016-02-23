@@ -286,6 +286,7 @@ Spotify.prototype.search = function (request, options) {
 			}
 			if (!type || type === "album") {
 				result.albums = response[result.albums].body.albums;
+				result.albums.items = result.albums.items.map(Spotify.albumToSchema);
 			}
 			if (!type || type === "artist") {
 				result.artists = response[result.artists].body.artists;
@@ -491,7 +492,6 @@ Spotify.trackToSchema = function(spotifyData, track) {
 	track.duration_ms = spotifyData.duration_ms;
 	track.artists = [];
 	_.forEach(spotifyData.artists, function(artist) {
-		console.log(JSON.stringify(track, null, 4));
 		track.artists.push({
 			id: artist.id,
 			name: artist.name,
@@ -518,30 +518,41 @@ Spotify.albumToSchema = function(spotifyData, album) {
 	album.uri = spotifyData.uri;
 	album.name = spotifyData.name;
 	album.images = spotifyData.images;
-	album.artists = spotifyData.artists.map(artist => {
-		return {
-			id: artist.id,
-			name: artist.name,
-			uri: artist.uri
-		}
-	});
-	album.tracks = {
-		total: spotifyData.tracks.total,
-		offset: spotifyData.tracks.offset,
-		items: []
-	}
-	if (spotifyData.tracks && spotifyData.tracks.items) {
-		album.tracks.items = spotifyData.tracks.items.map(item => {
-			item.album = {
-				images: album.images,
-				id: spotifyData.id
-			}
+	if (spotifyData.artists) {
+		album.artists = spotifyData.artists.map(artist => {
 			return {
-				...Spotify.trackToSchema(item)
+				id: artist.id,
+				name: artist.name,
+				uri: artist.uri
 			}
 		});
+	} else {
+		album.artists = [];
 	}
-	console.log("album: " + JSON.stringify(album, null, 2));
+	if (spotifyData.tracks) {
+		album.tracks = {
+			total: spotifyData.tracks.total,
+			offset: spotifyData.tracks.offset,
+			items: []
+		}
+		if (spotifyData.tracks && spotifyData.tracks.items) {
+			album.tracks.items = spotifyData.tracks.items.map(item => {
+				item.album = {
+					images: album.images,
+					id: spotifyData.id
+				}
+				return {
+					...Spotify.trackToSchema(item)
+				}
+			});
+		}
+	} else {
+		album.tracks = {
+			total: 0,
+			offset: 0,
+			items: []
+		}
+	}
 	return album;
 }
 
