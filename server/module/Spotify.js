@@ -221,7 +221,7 @@ Spotify.prototype.convertPlaylist = function(playlist) {
 						if (res.body && res.body.tracks && res.body.tracks.items && res.body.tracks.items.length) {
 							resolve({
 								source: "spotify",
-								track: Spotify.trackToSchema(res.body.tracks.items[0])
+								...Spotify.trackToSchema(res.body.tracks.items[0])
 							});
 						} else {
 							console.log(res.body.tracks);
@@ -257,7 +257,7 @@ Spotify.prototype.getArtistFull = function(id) {
 			resolve(artist);
 		}).catch(reject);
 	});
-} 
+}
 
 Spotify.prototype.search = function (request, options) {
 	'use strict';
@@ -574,4 +574,3 @@ Spotify.isLoggedIn = function(user) {
 	});
 }
 module.exports = Spotify;
-
