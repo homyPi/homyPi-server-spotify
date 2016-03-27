@@ -558,17 +558,19 @@ Spotify.albumToSchema = function(spotifyData, album) {
 
 Spotify.isLoggedIn = function(user) {
 	return new Promise(function(resolve, reject) {
+        console.log("Spotfiyfy.isLoggedIn...");
 		models.User.findOne({_id: user._id}, function (err, user) {
 			if (err) {
 				return reject(err);
 			}
-			if (user && user.tokens && user.externals.spotify
+            console.log("Spotfiyfy.isLoggedIn: got user");
+			if (user && user.externals && user.externals.spotify
 				&& user.externals.spotify.access_token) {
 				Spotify.getApi(user).then(function(api) {
 					return api.me().then(resolve).catch(reject);
 				}).catch(reject);
 			} else {
-				return resolve(false);
+				return resolve(null);
 			}
 		});
 	});
